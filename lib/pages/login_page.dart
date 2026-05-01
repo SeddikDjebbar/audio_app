@@ -13,6 +13,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final newPasswordController = TextEditingController();
   final auth = AuthService();
 
   void login() async {
@@ -38,12 +39,40 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  void resetPassword() async {
-    await auth.resetPassword(emailController.text.trim());
+  void resetPasswordDirect() async {
+    if (emailController.text.isEmpty ||
+        passwordController.text.isEmpty ||
+        newPasswordController.text.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Remplir tous les champs")));
+      return;
+    }
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text("Email envoyé 📧")));
+    try {
+      // 🔥 récupérer user
+      final user = FirebaseAuth.instance.currentUser;
+
+      // 🔥 créer credential
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      // 🔥 re-authentification (IMPORTANT)
+      await user!.reauthenticateWithCredential(credential);
+
+      // 🔥 changer mot de passe
+      await user.updatePassword(newPasswordController.text.trim());
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Mot de passe modifié ✅")));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
   }
 
   @override
@@ -63,13 +92,18 @@ class _LoginPageState extends State<LoginPage> {
               decoration: InputDecoration(labelText: "Password"),
               obscureText: true,
             ),
+            TextField(
+              controller: newPasswordController,
+              decoration: InputDecoration(labelText: "Nouveau mot de passe"),
+              obscureText: true,
+            ),
 
             SizedBox(height: 20),
 
             ElevatedButton(onPressed: login, child: Text("Login")),
 
             ElevatedButton(
-              onPressed: resetPassword,
+              onPressed: resetPasswordDirect,
               child: Text("Reset Password"),
             ),
 
