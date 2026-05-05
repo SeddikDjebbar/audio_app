@@ -24,6 +24,16 @@ Future<void> onStart(ServiceInstance service) async {
 
   print("SERVICE STARTED");
 
+  print("SERVICE AUDIO MANAGER: $audioManager");
+  audioManager.positionStream.listen((pos) {
+    service.invoke("position", {"position": pos.inSeconds});
+  });
+
+  audioManager.durationStream.listen((dur) {
+    if (dur != null) {
+      service.invoke("duration", {"duration": dur.inSeconds});
+    }
+  });
   // 🔥 NOTIFICATION FOREGROUND (OBLIGATOIRE)
   if (service is AndroidServiceInstance) {
     service.setForegroundNotificationInfo(
@@ -45,6 +55,10 @@ Future<void> onStart(ServiceInstance service) async {
         content: audioManager.getReciterName(),
       );
     }
+    service.invoke("update", {
+      "surah": audioManager.currentSurah,
+      "reciter": audioManager.reciter,
+    });
   });
 
   // 🔥 PAUSE
@@ -62,6 +76,7 @@ Future<void> onStart(ServiceInstance service) async {
   // 🔥 NEXT
   service.on("next").listen((event) async {
     print("NEXT EVENT RECEIVED");
+
     await audioManager.skipToNext();
 
     if (service is AndroidServiceInstance) {
@@ -70,11 +85,18 @@ Future<void> onStart(ServiceInstance service) async {
         content: audioManager.getReciterName(),
       );
     }
+
+    // ✅ SYNCHRO UI
+    service.invoke("update", {
+      "surah": audioManager.currentSurah,
+      "reciter": audioManager.reciter,
+    });
   });
 
   // 🔥 PREVIOUS
   service.on("previous").listen((event) async {
     print("PREVIOUS EVENT RECEIVED");
+
     await audioManager.skipToPrevious();
 
     if (service is AndroidServiceInstance) {
@@ -83,6 +105,12 @@ Future<void> onStart(ServiceInstance service) async {
         content: audioManager.getReciterName(),
       );
     }
+
+    // ✅ SYNCHRO UI
+    service.invoke("update", {
+      "surah": audioManager.currentSurah,
+      "reciter": audioManager.reciter,
+    });
   });
 
   // 🔥 RECITER
@@ -100,6 +128,10 @@ Future<void> onStart(ServiceInstance service) async {
         );
       }
     }
+    service.invoke("update", {
+      "surah": audioManager.currentSurah,
+      "reciter": audioManager.reciter,
+    });
   });
 
   // 🔥 STOP

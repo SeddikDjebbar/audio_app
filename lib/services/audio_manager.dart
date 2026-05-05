@@ -56,6 +56,10 @@ class AudioManager {
     await _player.seek(position);
   }
 
+  // 🔥 STREAMS
+  Stream<Duration> get positionStream => _player.positionStream;
+  Stream<Duration?> get durationStream => _player.durationStream;
+
   // 🔥 CHANGE RECITER
   Future<void> changeReciter(String newReciter) async {
     reciter = newReciter;
