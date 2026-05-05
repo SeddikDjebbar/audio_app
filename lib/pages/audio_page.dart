@@ -1,62 +1,81 @@
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
-import '../main.dart'; // pour audioHandler
-class AudioPage extends StatefulWidget {
-  @override
-  State<AudioPage> createState() => _AudioPageState();
-}
+import 'package:flutter_background_service/flutter_background_service.dart';
+import 'surah_page.dart';
 
-class _AudioPageState extends State<AudioPage> {
-  final player = AudioPlayer();
-
-  @override
-  void initState() {
-    super.initState();
-
-    // 🔥 mettre un audio (exemple internet)
-    player.setUrl(
-      "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-    );
-  }
-
-  void play() {
-  audioHandler.play();
-  }
-
-  void pause() {
-  audioHandler.pause(); 
-  }
-
-  void stop() {
-    audioHandler.stop();
-  }
-
-  @override
-  void dispose() {
-    player.dispose();
-    super.dispose();
-  }
-
+class AudioPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final service = FlutterBackgroundService();
+
     return Scaffold(
-      appBar: AppBar(title: Text("Audio Player")),
+      appBar: AppBar(title: Text("Quran Player")),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.music_note, size: 100),
+          Icon(Icons.menu_book, size: 100),
 
-          SizedBox(height: 20),
+          // 🔥 ouvrir liste sourates
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => SurahPage()),
+              );
+            },
+            child: Text("Choisir Sourate"),
+          ),
+
+          // 🔥 choix réciteur
+          DropdownButton<String>(
+            value: "abdul_basit_murattal",
+            items: [
+              DropdownMenuItem(
+                value: "abdul_basit_murattal",
+                child: Text("Abdul Baset"),
+              ),
+              DropdownMenuItem(value: "husary", child: Text("Al-Husary")),
+              DropdownMenuItem(value: "ali_jaber", child: Text("Ali Jaber")),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                service.invoke("reciter", {"reciter": value});
+              }
+            },
+          ),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
-                icon: Icon(Icons.play_arrow, size: 40),
-                onPressed: play,
+                icon: Icon(Icons.skip_previous),
+                onPressed: () {
+                  service.invoke("previous");
+                },
               ),
-              IconButton(icon: Icon(Icons.pause, size: 40), onPressed: pause),
-              IconButton(icon: Icon(Icons.stop, size: 40), onPressed: stop),
+              IconButton(
+                icon: Icon(Icons.play_arrow),
+                onPressed: () {
+                  service.invoke("resume");
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.pause),
+                onPressed: () {
+                  service.invoke("pause");
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.stop),
+                onPressed: () {
+                  service.invoke("stop");
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.skip_next),
+                onPressed: () {
+                  service.invoke("next");
+                },
+              ),
             ],
           ),
         ],
